@@ -63,9 +63,10 @@ const db = mysql.createPool({
     password: 'password',
     database: 'fullstack',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 4000,
     queueLimit: 0
 });
+
 
 // CreateTask Route
 app.post('/CreateTask', (req, res) => {
@@ -76,6 +77,14 @@ app.post('/CreateTask', (req, res) => {
     }
 
     if (typeof username !== 'string' || typeof password !== 'string' || typeof Task_app_Acronym !== 'string' || typeof Task_Name !== 'string') {
+        return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
+    }
+
+    if (Task_description && typeof Task_description !== 'string') {
+        return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
+    }
+
+    if (Task_plan && typeof Task_plan !== 'string') {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
@@ -167,7 +176,7 @@ app.post('/CreateTask', (req, res) => {
                         const validatePlanQuery = 'SELECT * FROM fullstack.plans WHERE Plan_MVP_name = ? AND Plan_app_Acronym = ?';
                         connection.query(validatePlanQuery, [Task_plan, Task_app_Acronym], (err, planResults) => {
                             if (err || planResults.length === 0) {
-                                return handleError(err || new Error('Invalid Task_plan'), 'Missing mandatory fields or invalid fields');
+                                return res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                             } else {
                                 proceedToCreateTask();
                             }
@@ -181,7 +190,7 @@ app.post('/CreateTask', (req, res) => {
                     const getAppRnumberQuery = 'SELECT App_Rnumber FROM fullstack.applications WHERE App_Acronym = ? FOR UPDATE';
                     connection.query(getAppRnumberQuery, [Task_app_Acronym], (err, appResults) => {
                         if (err || appResults.length === 0) {
-                            return handleError(err || new Error('Missing mandatory fields or invalid fields'), 'Missing mandatory fields or invalid fields');
+                            return res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                         } else {
                             const App_Rnumber = appResults[0].App_Rnumber;
                             const TaskId = `${Task_app_Acronym}_${App_Rnumber + 1}`;
