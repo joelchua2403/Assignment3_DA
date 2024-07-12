@@ -253,7 +253,7 @@ app.post('/GetTaskByState', (req, res) => {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
-    if (state !== 'open' && state !== 'doing' && state !== 'done' && state !== 'closed' && state !== 'to-do') {
+    if (state !== 'open' && state !== 'doing' && state !== 'done' && state !== 'closed' && state !== 'todo') {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 

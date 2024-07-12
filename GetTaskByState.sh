@@ -5,10 +5,9 @@ NUM_CASES=0
 STATUS_OK=200
 STATUS_INVALID_FIELDS=400
 STATUS_INVALID_USER=401
-STATUS_INVALID_ACCESS=403
 STATUS_INTERNAL_ERR=500
 
-DOMAIN=http://localhost:3002/CreateTask
+DOMAIN=http://localhost:3002/GetTaskByState
 USERNAME="test_user"
 PASSWORD="pa55word!"
 USERNAME_NO_ACCESS="dev1"
@@ -17,6 +16,8 @@ APP_ACRONYM="test_app"
 TASK_NAME="Test Task Name"
 TASK_DESC="Test Task Description"
 TASK_PLAN="Test Plan 1"
+
+
 
 
 
@@ -35,39 +36,66 @@ function test_end() {
     fi
 }
 
+
 # Some curl options:
 # -s: Don't diplay progress bar.
 # -w: Write an output into our variable.
 
-test_start Valid input
+test_start 'Valid input (open)'
 EXPECTED_STATUS=$STATUS_OK
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-# *************************** Access Rights ***************************
-
-test_start "No access rights"
-EXPECTED_STATUS=$STATUS_INVALID_ACCESS
+test_start 'Valid input (todo)'
+EXPECTED_STATUS=$STATUS_OK
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
-    \"username\" : \"$USERNAME_NO_ACCESS\",
-    \"password\" : \"$PASSWORD_NO_ACCESS\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"username\" : \"$USERNAME\",
+    \"password\" : \"$PASSWORD\",
+    \"state\" : \"todo\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
+
+test_start 'Valid input (doing)'
+EXPECTED_STATUS=$STATUS_OK
+OUTPUT_STATUS=$(curl --location $DOMAIN \
+--header 'Content-Type: application/json' \
+--data "{
+    \"username\" : \"$USERNAME\",
+    \"password\" : \"$PASSWORD\",
+    \"state\" : \"doing\"
+}" -s -w "%{response_code}" --output /dev/null)
+test_end
+
+test_start 'Valid input (done)'
+EXPECTED_STATUS=$STATUS_OK
+OUTPUT_STATUS=$(curl --location $DOMAIN \
+--header 'Content-Type: application/json' \
+--data "{
+    \"username\" : \"$USERNAME\",
+    \"password\" : \"$PASSWORD\",
+    \"state\" : \"done\"
+}" -s -w "%{response_code}" --output /dev/null)
+test_end
+
+test_start 'Valid input (closed)'
+EXPECTED_STATUS=$STATUS_OK
+OUTPUT_STATUS=$(curl --location $DOMAIN \
+--header 'Content-Type: application/json' \
+--data "{
+    \"username\" : \"$USERNAME\",
+    \"password\" : \"$PASSWORD\",
+    \"state\" : \"closed\"
+}" -s -w "%{response_code}" --output /dev/null)
+test_end
+
 
 # *************************** Username ***************************
 
@@ -183,204 +211,48 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-# *************************** Application Acronym ***************************
+# *************************** Task State ***************************
 
-test_start "Application does not exist"
+test_start "Empty state"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM; DROP TABLE user;\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"state\" : \"""\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-test_start "Empty application acronym"
+test_start "State is not a string"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"state\" : [\"open\"]
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-test_start "Application acronym is not a string"
+test_start "Missing state"
+EXPECTED_STATUS=$STATUS_INVALID_FIELDS
+OUTPUT_STATUS=$(curl --location $DOMAIN \
+--header 'Content-Type: application/json' \
+--data "{
+    \"username\" : \"$USERNAME\",
+    \"password\" : \"$PASSWORD\"
+}" -s -w "%{response_code}" --output /dev/null)
+test_end
+
+test_start "State is not a valid state"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : [\"$APP_ACRONYM\"],
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Missing application"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-# *************************** Task Name ***************************
-
-test_start "Empty task name"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_Name\" : \"\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Task name is not a string"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_Name\" : [\"$TASK_NAME\"],
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Missing task name"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-# *************************** Task Description ***************************
-
-test_start "Empty task description"
-EXPECTED_STATUS=$STATUS_OK
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Task description is not a string."
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : [\"$TASK_DESC\"],
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Missing task description"
-EXPECTED_STATUS=$STATUS_OK
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-# *************************** Plan ***************************
-
-test_start "Plan does not exist in database"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"Fake Plan\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Empty plan"
-EXPECTED_STATUS=$STATUS_OK
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"\"
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Plan is not a string"
-EXPECTED_STATUS=$STATUS_INVALID_FIELDS
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": [\"$TASK_PLAN\"]
-}" -s -w "%{response_code}" --output /dev/null)
-test_end
-
-test_start "Missing plan"
-EXPECTED_STATUS=$STATUS_OK
-OUTPUT_STATUS=$(curl --location $DOMAIN \
---header 'Content-Type: application/json' \
---data "{
-    \"username\" : \"$USERNAME\",
-    \"password\" : \"$PASSWORD\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_app_Acronym\" : \"$APP_ACRONYM\",
-    \"Task_description\" : \"$TASK_DESC\"
+    \"state\" : \"OPEN\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
