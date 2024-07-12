@@ -130,13 +130,13 @@ app.post('/CreateTask', (req, res) => {
                                 const checkGroupQuery = 'SELECT App_permit_Create FROM fullstack.applications WHERE App_Acronym = ?';
                                 connection.query(checkGroupQuery, [Task_app_Acronym], (err, groupResults) => {
                                     if (err) {
-                                        return handleError(err, 'Application not found');
+                                        return handleError(err, 'Missing mandatory fields or invalid fields');
                                     }
 
                                     if (groupResults.length === 0) {
                                         connection.rollback(() => {
                                             connection.release();
-                                            res.status(403).json({ message: 'Application not found' });
+                                            res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                                         });
                                     } else {
                                         const groupToCheck = groupResults[0].App_permit_Create;
@@ -181,7 +181,7 @@ app.post('/CreateTask', (req, res) => {
                     const getAppRnumberQuery = 'SELECT App_Rnumber FROM fullstack.applications WHERE App_Acronym = ? FOR UPDATE';
                     connection.query(getAppRnumberQuery, [Task_app_Acronym], (err, appResults) => {
                         if (err || appResults.length === 0) {
-                            return handleError(err || new Error('Application not found'), 'Application not found');
+                            return handleError(err || new Error('Missing mandatory fields or invalid fields'), 'Missing mandatory fields or invalid fields');
                         } else {
                             const App_Rnumber = appResults[0].App_Rnumber;
                             const TaskId = `${Task_app_Acronym}_${App_Rnumber + 1}`;
@@ -192,7 +192,7 @@ app.post('/CreateTask', (req, res) => {
                                 Task_description: Task_description || '',
                                 Task_plan: Task_plan || '',
                                 Task_state: 'open',
-                                Task_notes: '',
+                                Task_notes: `[open] ${new Date().toISOString()}: [${username}] created ${TaskId}.`,
                                 Task_creator: username,
                                 Task_owner: username,
                                 Task_createDate: new Date()
@@ -237,7 +237,7 @@ app.post('/GetTaskByState', (req, res) => {
     const { username, password, state } = req.body;
 
     if (!username || !password || !state) {
-        return res.status(400).json({ message: "Missing mandatory fields" });
+        return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
     if (typeof username !== 'string' || typeof password !== 'string' || typeof state !== 'string') {
@@ -290,7 +290,6 @@ app.post('/GetTaskByState', (req, res) => {
         });
     });
 });
-
 
 // PromoteTask2Done Route
 app.patch('/PromoteTask2Done', (req, res) => {
@@ -358,13 +357,13 @@ app.patch('/PromoteTask2Done', (req, res) => {
                     WHERE App_Acronym = (SELECT Task_app_Acronym FROM fullstack.tasks WHERE Task_id = ?)`;
                   connection.query(checkGroupQuery, [Task_id], (err, groupResults) => {
                     if (err) {
-                      return handleError(err, 'Application or task not found');
+                      return handleError(err, 'Missing mandatory fields or invalid fields');
                     }
   
                     if (groupResults.length === 0) {
                       connection.rollback(() => {
                         connection.release();
-                        res.status(403).json({ message: 'Application or task not found' });
+                        res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                       });
                     } else {
                       const { App_permit_Doing, App_permit_Done } = groupResults[0];
@@ -384,7 +383,7 @@ app.patch('/PromoteTask2Done', (req, res) => {
                             if (taskResults.length === 0) {
                               connection.rollback(() => {
                                 connection.release();
-                                res.status(404).json({ message: 'Application or task not found' });
+                                res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                               });
                             } else {
                               const taskState = taskResults[0].Task_state;
@@ -395,7 +394,13 @@ app.patch('/PromoteTask2Done', (req, res) => {
                                   res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                                 });
                               } else {
-                                connection.query('UPDATE fullstack.tasks SET Task_state = ? WHERE Task_id = ?', ['done', Task_id], (err, result) => {
+                                const newNote = `[doing] ${new Date().toISOString()}: [${username}] completed ${Task_id}.\n`;
+                                const updateTaskStateQuery = `
+                                  UPDATE fullstack.tasks 
+                                   SET Task_state = ?, Task_notes = CONCAT(?, IFNULL(Task_notes, '')) 
+                                  WHERE Task_id = ?`;
+  
+                                connection.query(updateTaskStateQuery, ['done', newNote, Task_id], (err, result) => {
                                   if (err) {
                                     return handleError(err, 'Error updating task state in the database');
                                   }
@@ -403,7 +408,7 @@ app.patch('/PromoteTask2Done', (req, res) => {
                                   if (result.affectedRows === 0) {
                                     connection.rollback(() => {
                                       connection.release();
-                                      res.status(404).json({ message: 'Application or task not found' });
+                                      res.status(400).json({ message: 'Missing mandatory fields or invalid fields' });
                                     });
                                   } else {
                                     connection.commit((err) => {
@@ -463,6 +468,7 @@ app.patch('/PromoteTask2Done', (req, res) => {
       });
     });
   });
+  
   
 
 
