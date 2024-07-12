@@ -370,7 +370,7 @@ app.patch('/PromoteTask2Done', (req, res) => {
                       const { App_permit_Doing, App_permit_Done } = groupResults[0];
   
                       const checkGroupCallback = (isUserInGroup) => {
-                        if (!isUserInGroup || isUserInGroup) {
+                        if (!isUserInGroup) {
                           connection.rollback(() => {
                             connection.release();
                             res.status(403).json({ message: 'Invalid access rights' });
@@ -448,7 +448,7 @@ app.patch('/PromoteTask2Done', (req, res) => {
                         }
                       };
   
-                      if (App_permit_Doing) {
+                      if (App_permit_Doing || !App_permit_Doing) {
                         CheckGroup(username, App_permit_Doing, checkGroupCallback);
                       } else {
                         checkGroupCallback(true);
