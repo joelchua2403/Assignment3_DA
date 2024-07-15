@@ -243,17 +243,17 @@ app.post('/CreateTask', (req, res) => {
 
 /// GetTaskByState Route
 app.post('/GetTaskByState', (req, res) => {
-    const { username, password, state } = req.body;
+    const { username, password, Task_state } = req.body;
 
-    if (!username || !password || !state) {
+    if (!username || !password || !Task_state) {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
-    if (typeof username !== 'string' || typeof password !== 'string' || typeof state !== 'string') {
+    if (typeof username !== 'string' || typeof password !== 'string' || typeof Task_state !== 'string') {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
-    if (state !== 'open' && state !== 'doing' && state !== 'done' && state !== 'closed' && state !== 'todo') {
+    if (Task_state !== 'open' && Task_state !== 'doing' && Task_state !== 'done' && Task_state !== 'closed' && Task_state !== 'todo') {
         return res.status(400).json({ message: "Missing mandatory fields or invalid fields" });
     }
 
@@ -288,7 +288,7 @@ app.post('/GetTaskByState', (req, res) => {
                 }
 
                 const query = 'SELECT Task_id, Task_Name, Task_description, Task_plan, Task_creator, Task_owner, Task_createDate FROM fullstack.tasks WHERE Task_state = ?';
-                connection.query(query, [state], (err, results) => {
+                connection.query(query, [Task_state], (err, results) => {
                     if (err) {
                         return handleError(err, 'Internal server error');
                     }
