@@ -7,12 +7,13 @@ STATUS_INVALID_FIELDS=400
 STATUS_INVALID_USER=401
 STATUS_INTERNAL_ERR=500
 
-DOMAIN=http://localhost:3002/GetTaskByState
+DOMAIN=http://localhost:3002/PromoteTask2Done
 USERNAME="test_user"
 PASSWORD="pa55word!"
 USERNAME_DOES_NOT_EXIST="wronguser"
 WRONG_PASSWORD="@WrongPass"
 APP_ACRONYM="test_app"
+TASK_ID="test_app_56"
 
 
 
@@ -45,7 +46,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"open\"
+    \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -56,7 +57,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"todo\"
+    \"state\" : \"todo\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -67,7 +68,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"doing\"
+    \"state\" : \"doing\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -78,7 +79,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"done\"
+    \"state\" : \"done\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -89,7 +90,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"closed\"
+    \"state\" : \"closed\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -104,7 +105,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME_DOES_NOT_EXIST\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"open\"
+    \"state\" : \"open\"
 }" -s -w "%{http_code}" --output /dev/null)
 test_end
 
@@ -115,7 +116,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -126,7 +127,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : [\"$USERNAME\"],
     \"password\" : \"$PASSWORD\",
-  \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -136,7 +137,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"password\" : \"$PASSWORD\",
-   \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -149,7 +150,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$WRONG_PASSWORD\",
- \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -160,7 +161,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"""\",
-   \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -171,7 +172,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : [\"$PASSWORD\"],
-   \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -181,35 +182,35 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
- \"Task_state\" : \"open\"
+    \"Task_id\" : \"$TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-# *************************** Task State ***************************
+# *************************** Task_id ***************************
 
-test_start "Empty state"
+test_start "Empty Task_id"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"""\"
+    \"Task_id\" : \"""\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-test_start "State is not a string"
+test_start "Task_id is not a string"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : [\"open\"]
+    \"Task_id\" : [\"$TASK_ID\"]
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-test_start "Missing state"
+test_start "Missing Task_id"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
@@ -219,14 +220,14 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
-test_start "State is not a valid state"
+test_start "Task_id not found in database"
 EXPECTED_STATUS=$STATUS_INVALID_FIELDS
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"$PASSWORD\",
-    \"Task_state\" : \"OPEN\"
+    \"Task_id\" : \"$INVALID_TASK_ID\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
