@@ -6,10 +6,13 @@ STATUS_OK=200
 STATUS_INVALID_FIELDS=400
 STATUS_INVALID_USER=401
 STATUS_INTERNAL_ERR=500
+STATUS_INVALID_ACCESS=403
 
 DOMAIN=http://localhost:3002/PromoteTask2Done
 USERNAME="test_user"
 PASSWORD="pa55word!"
+USERNAME_NO_ACCESS="user1"
+PASSWORD_NO_ACCESS="@Password1"
 USERNAME_DOES_NOT_EXIST="wronguser"
 WRONG_PASSWORD="@WrongPass"
 APP_ACRONYM="test_app"
@@ -40,6 +43,19 @@ function test_end() {
 # -s: Don't diplay progress bar.
 # -w: Write an output into our variable.
 
+
+# *************************** Access Rights ***************************
+
+test_start "No access rights"
+EXPECTED_STATUS=$STATUS_INVALID_ACCESS
+OUTPUT_STATUS=$(curl --location $DOMAIN \
+--header 'Content-Type: application/json' \
+--data "{
+    \"username\" : \"$USERNAME_NO_ACCESS\",
+    \"password\" : \"$PASSWORD_NO_ACCESS\",
+    \"Task_id\" : \"$TASK_ID\"
+}" -s -w "%{http_code}" -X PATCH --output /dev/null)
+test_end
 
 
 # *************************** Username ***************************
