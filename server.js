@@ -241,7 +241,7 @@ app.post('/CreateTask', (req, res) => {
 });
 
 
-// GetTaskByState Route
+/// GetTaskByState Route
 app.post('/GetTaskByState', (req, res) => {
     const { username, password, state } = req.body;
 
@@ -299,7 +299,6 @@ app.post('/GetTaskByState', (req, res) => {
         });
     });
 });
-
 // PromoteTask2Done Route
 app.patch('/PromoteTask2Done', (req, res) => {
     const { username, password, Task_id } = req.body;

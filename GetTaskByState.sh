@@ -10,8 +10,8 @@ STATUS_INTERNAL_ERR=500
 DOMAIN=http://localhost:3002/GetTaskByState
 USERNAME="test_user"
 PASSWORD="pa55word!"
-USERNAME_NO_ACCESS="dev1"
-PASSWORD_NO_ACCESS="@Password1"
+USERNAME_DOES_NOT_EXIST="wronguser"
+WRONG_PASSWORD="@WrongPass"
 APP_ACRONYM="test_app"
 TASK_NAME="Test Task Name"
 TASK_DESC="Test Task Description"
@@ -99,18 +99,16 @@ test_end
 
 # *************************** Username ***************************
 
-test_start "Username does not exist in database"
+# Test for username that does not exist
+test_start "Username does not exist"
 EXPECTED_STATUS=$STATUS_INVALID_USER
 OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
-    \"username\" : \"$USERNAME; DROP TABLE user;\",
+    \"username\" : \"$USERNAME_DOES_NOT_EXIST\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
-}" -s -w "%{response_code}" --output /dev/null)
+    \"state\" : \"open\"
+}" -s -w "%{http_code}" --output /dev/null)
 test_end
 
 test_start "Empty username"
@@ -120,10 +118,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"\",
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -134,10 +129,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : [\"$USERNAME\"],
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+  \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -147,10 +139,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"password\" : \"$PASSWORD\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+   \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -162,11 +151,8 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
-    \"password\" : \""WrongPass"\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+    \"password\" : \"$WRONG_PASSWORD\",
+ \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -177,10 +163,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : \"""\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+   \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -191,10 +174,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --data "{
     \"username\" : \"$USERNAME\",
     \"password\" : [\"$PASSWORD\"],
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+   \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
@@ -204,10 +184,7 @@ OUTPUT_STATUS=$(curl --location $DOMAIN \
 --header 'Content-Type: application/json' \
 --data "{
     \"username\" : \"$USERNAME\",
-    \"Task_app_Acronym\": \"$APP_ACRONYM\",
-    \"Task_Name\" : \"$TASK_NAME\",
-    \"Task_description\" : \"$TASK_DESC\",
-    \"Task_plan\": \"$TASK_PLAN\"
+ \"state\" : \"open\"
 }" -s -w "%{response_code}" --output /dev/null)
 test_end
 
